@@ -3,6 +3,7 @@ const mysql = require('mysql2');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
+
 const app = express();
 const port = 5000;
 app.use(cors());
@@ -99,5 +100,87 @@ app.post('/api/maintenance', (req, res) => {
         // Authentication successful
         console.log('Authentication successful for user:', username);
         res.json({ message: 'Authentication successful.' });
+    });
+});
+
+// Middleware to log requests
+app.use((req, res, next) => {
+    const ip = req.ip;
+    const userAgent = req.headers['user-agent'];
+    const url = req.originalUrl; 
+    const method = req.method; 
+
+    // Insert the log into the RequestLogs table
+    const query = `INSERT INTO RequestLogs (ip_address, user_agent, request_url, request_method) 
+                   VALUES (?, ?, ?, ?)`;
+
+    db.query(query, [ip, userAgent, url, method], (err, result) => {
+        if (err) {
+            console.error('Error logging request:', err);
+        }
+    });
+
+    next();
+});
+
+// Endpoint to get page access data
+app.get('/api/logs/page-access', (req, res) => {
+    const query = `
+    SELECT request_url, COUNT(*) AS visit_count, 
+       GROUP_CONCAT(DISTINCT ip_address) AS ip_addresses,
+       timestamp AS access_date
+FROM RequestLogs
+GROUP BY request_url, timestamp
+ORDER BY timestamp ASC;
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching page access data:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        res.json(results);
+    });
+});
+
+
+// Endpoint to trigger error for testing
+app.get('/test-error', (req, res, next) => {
+    const error = new Error('This is a test error');
+    next(error); 
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    const ip = req.ip;
+    const errorMessage = err.message; 
+
+    // Insert the error into the ErrorLogs table
+    const query = `INSERT INTO ErrorLogs (ip_address, error_message) 
+                   VALUES (?, ?)`;
+
+    db.query(query, [ip, errorMessage], (error, result) => {
+        if (error) {
+            console.error('Error logging the error:', error);
+        }
+    });
+
+    res.status(500).send({ error: 'Internal server error' });
+});
+
+// Endpoint to get error logs
+app.get('/api/logs/errors', (req, res) => {
+    const query = `
+    SELECT error_message, ip_address, timestamp 
+    FROM ErrorLogs 
+    ORDER BY timestamp DESC;
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching error logs:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        res.json(results);
     });
 });
