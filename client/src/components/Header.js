@@ -1,35 +1,76 @@
-import React from "react";
-import logo from '../img/logo.png';
+import React, { useState } from "react";
+import axios from "axios";
+import { Autocomplete, TextField } from "@mui/material";
+import logo from "../img/logo.png";
 
-class Header extends React.Component {
-    render() {
-        return (
-            <header>
-                <div id="search-bar">
-            <input type="text" placeholder="Search for recipes..." />
-            <button type="button">Search</button>
-        </div>
-        <img src={logo} alt="RecipePortal Logo" id="logo" />
-        <nav className="nav">
-            <ul className="nav-elem">
-                <li className="dropdown">
-                    <a href="#">Profile</a>
-                    <ul className="dropdown-menu">
-                        <li><a href="#">Log In</a></li>
-                        <li><a href="#">Upload a Recipe</a></li>
-                        <li><a href="#">Favorites</a></li>
-                    </ul>
-                </li>
-                <li><a href="/">Home</a></li>
-                <li><a href="#recipes">Explore Recipes</a></li>
-                <li><a href="/maintenance">Maintenance</a></li>
-                
-                
-            </ul>
-        </nav>
-            </header>
-        )
-    }
-}
+const Header = () => {
+    const [options, setOptions] = useState([]);
+    const [searchValue, setSearchValue] = useState("");
+
+    const handleInputChange = async (event, value) => {
+        console.log("User Input:", value);
+        setSearchValue(value);
+
+        if (value.trim()) {
+            try {
+                const response = await axios.get("http://localhost:5000/api/autocomplete", {
+                    params: { query: value },
+                });
+                console.log("Autocomplete Suggestions Response:", response.data);
+
+                setOptions(Array.isArray(response.data) ? response.data : []);
+            } catch (error) {
+                console.error("Error fetching autocomplete suggestions:", error);
+                setOptions([]); 
+            }
+        } else {
+            setOptions([]);
+        }
+    };
+
+    const handleSearchSubmit = () => {
+        console.log("Searching for:", searchValue);
+    };
+
+    return (
+        <header>
+            <div id="search-bar">
+                <Autocomplete
+                    freeSolo
+                    options={options.map((option) =>
+                        typeof option === "object" && option.title ? option.title : option
+                    )}
+                    onInputChange={handleInputChange}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            placeholder="Search for recipes..."
+                            variant="outlined"
+                        />
+                    )}
+                />
+                <button type="button" onClick={handleSearchSubmit}>
+                    Search
+                </button>
+            </div>
+            <img src={logo} alt="RecipePortal Logo" id="logo" />
+            <nav className="nav">
+                <ul className="nav-elem">
+                    <li className="dropdown">
+                        <a href="#">Profile</a>
+                        <ul className="dropdown-menu">
+                            <li><a href="#">Log In</a></li>
+                            <li><a href="#">Upload a Recipe</a></li>
+                            <li><a href="#">Favorites</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="#recipes">Explore Recipes</a></li>
+                    <li><a href="/maintenance">Maintenance</a></li>
+                </ul>
+            </nav>
+        </header>
+    );
+};
 
 export default Header;

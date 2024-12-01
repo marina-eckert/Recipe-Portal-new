@@ -34,7 +34,9 @@ header {
   height: 50px;
 }
 
-
+.css-1tlcqt-MuiAutocomplete-root {
+  width: 200px;
+}
 
 #search-bar {
   display: flex;

@@ -123,6 +123,29 @@ app.use((req, res, next) => {
     next();
 });
 
+// Endpoint to fetch autocomplete suggestions
+app.get('/api/autocomplete', (req, res) => {
+    const { query } = req.query;
+
+    if (!query) {
+        return res.status(400).json({ error: 'Query is required' });
+    }
+
+    const sql = `
+        SELECT title 
+        FROM Recipe 
+        WHERE title LIKE ?
+        LIMIT 10
+    `;
+    db.query(sql, [`%${query}%`], (err, results) => {
+        if (err) {
+            console.error('Error fetching autocomplete suggestions:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        res.json(results.map(row => row.title));
+    });
+});
+
 // Endpoint to get page access data
 app.get('/api/logs/page-access', (req, res) => {
     const query = `
