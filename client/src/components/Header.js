@@ -59,13 +59,13 @@ const Header = () => {
                     <li className="dropdown">
                         <a href="#">Profile</a>
                         <ul className="dropdown-menu">
-                            <li><a href="#">Log In</a></li>
-                            <li><a href="#">Upload a Recipe</a></li>
-                            <li><a href="#">Favorites</a></li>
+                            <li><a href="/add-user">Register</a></li>
+                            <li><a href="/add-recipe">Upload a Recipe</a></li>
+                            <li><a href="/search">Favorites</a></li>
                         </ul>
                     </li>
                     <li><a href="/">Home</a></li>
-                    <li><a href="#recipes">Explore Recipes</a></li>
+                    <li><a href="/recipes-list">Explore Recipes</a></li>
                     <li><a href="/maintenance">Maintenance</a></li>
                 </ul>
             </nav>

@@ -26,7 +26,7 @@ class Home extends React.Component{
         <section id="call-to-action">
             <h2>Join RecipePortal</h2>
             <p>Create an account to save your favorite recipes and share your own.</p>
-            <button type="button">Sign Up Now</button>
+            <button type="button"><a href="/add-user">Sign Up Now</a></button>
         </section>
     </main>
         )

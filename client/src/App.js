@@ -11,6 +11,8 @@ import AddRecipe from './pages/AddRecipe';
 import SearchForm from './pages/SearchForm';
 import SearchResults from './pages/SearchResults';
 import FavoriteDetail from './pages/FavoriteDetail';
+import RecipesList from './pages/RecipesList'; 
+import Map from './pages/Map';
 
 import "./App.css";
 
@@ -26,6 +28,8 @@ const App = () => (
         <Route path="/add-recipe" element={<AddRecipe />} />
         <Route path="/search" element={<SearchForm />} />
         <Route path="/results" element={<SearchResults />} />
+        <Route path="/recipes-list" element={<RecipesList />} />
+        <Route path="/geolocation" element={<Map />} />
         <Route path="/favorite/:favoriteId" element={<FavoriteDetail />} />
       </Routes>
       <Footer />

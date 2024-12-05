@@ -2,6 +2,8 @@ const express = require('express');
 const mysql = require('mysql2');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const axios = require('axios');
+
 
 
 const app = express();
@@ -25,6 +27,121 @@ console.log('Connected to MySQL database.');
 app.listen(port, () => {
 console.log(`Server running at http://localhost:${port}`);
 });
+
+// API to register a new user
+app.post("/api/users", (req, res) => {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+        return res.status(400).json({ error: "All fields are required" });
+    }
+
+ 
+    const query = `
+        INSERT INTO User (name, email, password, registration_date) 
+        VALUES (?, ?, ?, CURDATE())
+    `;
+    db.query(query, [name, email, password], (err, result) => {
+        if (err) {
+            if (err.code === "ER_DUP_ENTRY") {
+                return res.status(400).json({ error: "Email already exists" });
+            }
+            console.error("Error inserting user:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        res.status(201).json({ message: "User registered successfully", userId: result.insertId });
+    });
+});
+
+//endpoint to get all users
+app.get('/api/users', (req, res) => {
+    const query = 'SELECT user_id, name FROM User';
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching users:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        res.json(results);
+    });
+});
+
+//endpoint to get all recipes
+app.get('/api/recipes', (req, res) => {
+    const query = 'SELECT recipe_id, title FROM Recipe';
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching recipes:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        res.json(results);
+    });
+});
+
+// API to get all recipes
+app.get('/api/recipes-with-descriptions', (req, res) => {
+    const query = `
+      SELECT recipe_id, title, description, cuisine_type, cooking_time, steps, upload_date
+      FROM Recipe
+    `;
+  
+    db.query(query, (err, results) => {
+      if (err) {
+        console.error('Error fetching recipes:', err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+      res.json(results);
+    });
+  });
+  
+
+//endpoint to add favorite
+app.post('/api/favorites', (req, res) => {
+    const { userId, recipeId } = req.body;
+
+    if (!userId || !recipeId) {
+        return res.status(400).json({ error: 'User ID and Recipe ID are required' });
+    }
+
+    const query = `
+        INSERT INTO Favorite (user_id, recipe_id)
+        VALUES (?, ?)`;
+
+    db.query(query, [userId, recipeId], (err, results) => {
+        if (err) {
+            console.error('Error adding favorite:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+        res.status(201).json({ message: 'Favorite added successfully', favoriteId: results.insertId });
+    });
+});
+
+// API to add a new recipe
+app.post('/api/recipes', (req, res) => {
+    const { title, description, cuisineType, steps, userId } = req.body;
+  
+    if (!title || !description || !cuisineType || !steps || !userId) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+  
+    const query = `
+      INSERT INTO Recipe (title, description, cuisine_type, steps, author_id, upload_date) 
+      VALUES (?, ?, ?, ?, ?, CURDATE())
+    `;
+  
+    db.query(query, [title, description, cuisineType, steps, userId], (err, result) => {
+      if (err) {
+        console.error('Error inserting recipe:', err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+      res.status(201).json({ message: 'Recipe added successfully' });
+    });
+  });
+  
+
+
+
 // Endpoint to get all favorited recipes by a specific user
 app.get('/api/favorites', (req, res) => {
     const { userName } = req.query;
@@ -34,7 +151,7 @@ app.get('/api/favorites', (req, res) => {
     }
 
     const query = `
-        SELECT f.favorite_id, r.title, f.user_id, f.recipe_id, f.favorite_id, f.favorite_date
+        SELECT f.favorite_id, r.title, f.user_id, f.recipe_id, f.favorite_id
         FROM Favorite f
         JOIN Recipe r ON f.recipe_id = r.recipe_id
         JOIN User u ON f.user_id = u.user_id
@@ -145,6 +262,33 @@ app.get('/api/autocomplete', (req, res) => {
         res.json(results.map(row => row.title));
     });
 });
+
+// Middleware to get the client IP address
+const getClientIp = (req) => {
+    const forwarded = req.headers['x-forwarded-for'];
+    return forwarded ? forwarded.split(',')[0] : req.connection.remoteAddress;
+  };
+  
+  // Endpoint to fetch geolocation data based on IP
+app.get('/api/geolocation', async (req, res) => {
+    const clientIp = getClientIp(req);
+    
+    try {
+      const response = await axios.get(`https://ipinfo.io/85.107.84.208/json?token=bfaea04543e376`);
+  
+      const { loc, ip } = response.data;
+      const [latitude, longitude] = loc.split(',');
+  
+      res.json({
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude),
+        ip: ip,
+      });
+    } catch (error) {
+      console.error('Error fetching geolocation data:', error);
+      res.status(500).json({ error: 'Failed to retrieve geolocation data' });
+    }
+  });
 
 // Endpoint to get page access data
 app.get('/api/logs/page-access', (req, res) => {

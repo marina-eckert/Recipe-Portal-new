@@ -89,6 +89,10 @@ main {
   cursor: pointer;
 }
 
+#call-to-action button a {
+  text-decoration: none;
+}
+
 footer {
   background-color: #F5F2F2;
   color: #2f4f4f;

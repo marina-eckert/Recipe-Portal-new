@@ -12,7 +12,7 @@ const AddUser = () => {
     if (name && email && password) {
       try {
         await axios.post('http://localhost:5000/api/users', { name, email, password });
-        setFeedback('User registered successfully!');
+        setFeedback('Registered successfully!');
         setName('');
         setEmail('');
         setPassword('');
@@ -27,7 +27,7 @@ const AddUser = () => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <h1>Add New Registered User</h1>
+      <h1>Register</h1>
       <label>Name:</label>
       <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
       <br />
